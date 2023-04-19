@@ -95,6 +95,7 @@ public class BoardGameService {
             return Optional.empty();
         }
         Review review = Review.createFromDocument(doc.get());
+        System.out.println("Review created from cid >>>>>>>>>>>>" + review.toString()); // print here already changed
         Comment oldComment = new Comment(review.getComment(), review.getRating(), review.getPosted());
 
         // update new review
@@ -107,6 +108,7 @@ public class BoardGameService {
         for (Comment c : existingComments) {
             comments.add(c);
         }
+
         comments.add(oldComment);
         review.setEditedComments(comments);
 

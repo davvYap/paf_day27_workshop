@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 import org.bson.Document;
@@ -20,6 +21,8 @@ public class Comment implements Serializable {
     private String comment;
     private int rating;
     private LocalDateTime posted;
+
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS";
 
     public Comment() {
     }
@@ -73,22 +76,46 @@ public class Comment implements Serializable {
         return c;
     }
 
+    public static Comment convertFromJSONforUpdate(String json) throws IOException {
+        Comment c = new Comment();
+        if (json != null) {
+            try (InputStream is = new ByteArrayInputStream(json.getBytes())) {
+                JsonReader r = Json.createReader(is);
+                JsonObject jsObj = r.readObject();
+                c.setComment(jsObj.getString("comment"));
+                c.setRating(jsObj.getInt("rating"));
+
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+                c.setPosted(LocalDateTime.parse(jsObj.getString("posted"), formatter));
+            }
+        }
+        return c;
+    }
+
     public static Comment convertFromDocument(Document d) {
         Comment c = new Comment();
         c.setComment(d.getString("comment"));
         c.setRating(d.getInteger("rating"));
-        Date postedDate = d.getDate("posted");
-        Instant instant = postedDate.toInstant();
-        LocalDateTime posted = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-        c.setPosted(posted);
+        // Date postedDate = d.getDate("posted");
+        // Instant instant = postedDate.toInstant();
+        // LocalDateTime posted = LocalDateTime.ofInstant(instant,
+        // ZoneId.systemDefault());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        c.setPosted(LocalDateTime.parse(d.getString("posted"), formatter));
         return c;
     }
 
     public JsonObjectBuilder toJSONObjectBuilder() {
+        // to standardize the output localdatetime
+        LocalDateTime postedTime = this.getPosted();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        String formattedDateTime = postedTime.format(formatter);
+
         return Json.createObjectBuilder()
                 .add("comment", this.comment)
                 .add("rating", this.rating)
-                .add("posted", this.posted.toString());
+                .add("posted", formattedDateTime);
     }
 
 }

@@ -1,5 +1,7 @@
 package sg.edu.nus.iss.workshop27.repository;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +28,8 @@ public class BoardGameRepository {
 
     @Autowired
     MongoTemplate mongoTemplate;
+
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS";
 
     public List<Game> getAllGamesByPagination(int page, int size) {
         Query query = new Query();
@@ -141,8 +145,17 @@ public class BoardGameRepository {
         Update updateOps = new Update()
                 .set("comment", comment.getComment())
                 .set("rating", comment.getRating())
-                .set("edited", comments);
+                .set("posted", getLocalDateTimeNowString())
+                .set("edited", comments.stream().map(c -> c.toJSONObjectBuilder().build().toString()).toList());
+        // .set("edited", comments);
         UpdateResult updateResult = mongoTemplate.updateMulti(q, updateOps, Document.class, "reviews");
         return updateResult.getModifiedCount();
+    }
+
+    public String getLocalDateTimeNowString() {
+        LocalDateTime postedTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        String formattedDateTime = postedTime.format(formatter);
+        return formattedDateTime;
     }
 }

@@ -1,9 +1,13 @@
 package sg.edu.nus.iss.workshop27.model;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.Document;
@@ -22,6 +26,8 @@ public class Review implements Serializable {
     private LocalDateTime posted;
     private String boargameName;
     private List<Comment> editedComments = new ArrayList<>();
+
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS";
 
     public Review() {
     }
@@ -105,30 +111,56 @@ public class Review implements Serializable {
         r.setRating(d.getInteger("rating"));
         r.setBoargameName(d.getString("name"));
 
-        List<Document> list = d.get("edited", List.class);
+        List<String> list = (List<String>) d.get("edited", List.class);
         if (list != null) {
-            r.setEditedComments(list.stream().map(doc -> Comment.convertFromDocument(doc)).toList());
+            r.setEditedComments(list.stream().map(json -> {
+                try {
+                    return Comment.convertFromJSONforUpdate(json);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }).toList());
         }
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
-        LocalDateTime dateTime = LocalDateTime.parse(d.getString("posted"), formatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        LocalDateTime dateTime = LocalDateTime.parse(d.getString("posted"),
+                formatter);
+
+        // Date postedDate = d.getDate("posted");
+        // Instant instant = postedDate.toInstant();
+        // LocalDateTime dateTime = LocalDateTime.ofInstant(instant,
+        // ZoneId.systemDefault());
+
         r.setPosted(dateTime);
         return r;
     }
 
     public JsonObject toJSONInsert() {
+
+        // to standardize the output localdatetime
+        LocalDateTime postedTime = this.getPosted();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        String formattedDateTime = postedTime.format(formatter);
+
         return Json.createObjectBuilder()
                 .add("user", this.user)
                 .add("rating", this.rating)
                 .add("cid", this.cid)
                 .add("comment", this.comment)
                 .add("ID", this.gid)
-                .add("posted", this.posted.toString())
+                .add("posted", formattedDateTime)
                 .add("name", this.boargameName)
                 .build();
     }
 
     public JsonObject toJSONUpdate() {
+
+        // to standardize the output localdatetime
+        LocalDateTime postedTime = this.getPosted();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+        String formattedDateTime = postedTime.format(formatter);
+
         JsonArrayBuilder jsArr = Json.createArrayBuilder();
         List<JsonObjectBuilder> listOfComments = this.getEditedComments().stream()
                 .map(c -> c.toJSONObjectBuilder())
@@ -142,7 +174,7 @@ public class Review implements Serializable {
                 .add("rating", this.rating)
                 .add("comment", this.comment)
                 .add("ID", this.gid)
-                .add("posted", this.posted.toString())
+                .add("posted", formattedDateTime)
                 .add("name", this.boargameName)
                 .add("edited", jsArr)
                 .build();
