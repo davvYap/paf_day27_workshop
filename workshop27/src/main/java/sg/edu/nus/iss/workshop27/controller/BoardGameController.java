@@ -3,8 +3,6 @@ package sg.edu.nus.iss.workshop27.controller;
 import java.io.IOException;
 import java.util.Optional;
 
-import javax.swing.text.html.Option;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,7 +26,7 @@ public class BoardGameController {
     @Autowired
     BoardGameService boardGameService;
 
-    @PostMapping(path = "/review", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    @PostMapping(path = "/review", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> postReviewOnBoardgames(@ModelAttribute Review review) {
         try {
             boardGameService.insertReview(review);
@@ -38,7 +36,7 @@ public class BoardGameController {
         return ResponseEntity.ok(review.toJSONInsert().toString());
     }
 
-    @PutMapping(path = "/review/{reviewId}")
+    @PutMapping(path = "/review/{reviewId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> updateReviewOnBoardgame(@RequestBody String json,
             @PathVariable String reviewId) throws IOException {
         Comment comment = Comment.convertFromJSON(json);
@@ -56,7 +54,7 @@ public class BoardGameController {
         return ResponseEntity.ok().body(review.toJSONUpdate().toString());
     }
 
-    @GetMapping(path = "/review/{reviewId}")
+    @GetMapping(path = "/review/{reviewId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getReview(@PathVariable String reviewId) {
         Optional<Review> opReview = boardGameService.getReviewByCid(reviewId);
         if (opReview.isEmpty()) {
@@ -70,7 +68,7 @@ public class BoardGameController {
         return ResponseEntity.ok().body(review.toJSON().toString());
     }
 
-    @GetMapping(path = "/review/{reviewId}/history")
+    @GetMapping(path = "/review/{reviewId}/history", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getReviewHistory(@PathVariable String reviewId) {
         Optional<Review> opReview = boardGameService.getReviewByCid(reviewId);
         if (opReview.isEmpty()) {

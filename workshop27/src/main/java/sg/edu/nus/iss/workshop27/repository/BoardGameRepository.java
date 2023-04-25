@@ -148,7 +148,7 @@ public class BoardGameRepository {
                 .set("posted", getLocalDateTimeNowString())
                 .set("edited", comments.stream().map(c -> c.toJSONObjectBuilder().build().toString()).toList());
         // .set("edited", comments);
-        UpdateResult updateResult = mongoTemplate.updateMulti(q, updateOps, Document.class, "reviews");
+        UpdateResult updateResult = mongoTemplate.updateFirst(q, updateOps, Document.class, "reviews");
         return updateResult.getModifiedCount();
     }
 
